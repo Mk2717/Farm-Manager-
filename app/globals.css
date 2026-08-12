@@ -1,0 +1,3 @@
+html, body { margin: 0; width: 100%; min-height: 100%; overflow: hidden; -webkit-text-size-adjust: 100%; }
+.farm-manager-shell { width: 100vw; height: 100dvh; }
+.farm-manager-frame { display: block; width: 100%; min-width: 0; height: 100%; border: 0; background: #f4f6f2; }

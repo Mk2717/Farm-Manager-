@@ -1,42 +1,55 @@
 # Farm Manager SaaS
 
-Offline-first livestock farm management platform for layers, broilers, goats, cattle, sheep and other farm animals.
+Offline-first livestock operations app for layers, broilers, goats, cattle, sheep and extensible species.
 
-## Current milestone
+## Current deployment milestone
 
-Phase 0A Step 6: owner onboarding, authenticated multi-tenant farm accounts, offline-first browser storage, sync API, normalized PostgreSQL projections for daily records, flock population, production and stock movements, audit history, and domain integrity rules.
+Phase 0A foundation plus early operational UI modules.
 
-## Development login
+Implemented in the deployed app:
 
-When running with the local file store:
+- Device-local administrator workspace while production authentication is deferred
+- Flocks and ledger-derived population
+- Individual animal register
+- Daily mortality, egg, feed and water entry
+- Multi-species production records
+- Inventory items and ledger-derived stock balances
+- Receipts, issues, wastage and stock adjustments
+- Health, vaccination, treatment and follow-up records
+- Farm profile, operational locations, and extensible species/breed master data
+- Breeding, pregnancy, birth and weaning event register
+- Compact phone layout with bottom navigation and denser field-work cards
+- Swipeable bottom navigation with forward and back controls
+- Supplier directory and purchase tracking
+- Customer directory, sales revenue and credit tracking
+- Categorized expense and cash-outflow tracking
+- Farm tasks, priorities, due dates and completion alerts
+- IndexedDB persistence, service worker, offline queue and audit history
+- Mobile-first responsive interface
 
-- Email: `owner@farm.local`
-- Password: `farm12345`
+## Blueprint invariants preserved
 
-Do not use the development credentials in production.
+- Flock population is derived from population events.
+- Stock balance is derived from stock movements.
+- Corrections use new ledger events; records are not silently deleted.
+- Offline commands use unique IDs for future idempotent synchronization.
+- Cloud failure never removes local records.
 
-## Run locally
+## Phase 0A hardening priorities
 
-```bash
-npm install
-npm run build
-npm start
-```
+The next work must strengthen the foundation before adding more broad modules:
 
-Open `http://localhost:4173`.
+1. Restore secure owner authentication and role/permission enforcement.
+2. Project every new operational command into hosted normalized tables.
+3. Add organization context to every tenant-owned record.
+4. Implement per-entity conflict resolution and visible sync recovery.
+5. Add reversal workflows for population and inventory ledger corrections.
+6. Seed roles and permissions, building on the implemented species and breed catalog.
+7. Add domain tests for every browser workflow and its server projection.
 
-## Tests
+## Deferred blueprint modules
 
-```bash
-npm test
-npm run test:production
-npm run test:step6
-```
+- Reporting
+- Multi-farm switching and nested locations
 
-## Production configuration
-
-Copy `.env.example` and configure `DATABASE_URL` and a strong `FARM_MANAGER_SECRET`. Apply migrations using `npm run db:migrate`, then seed only when appropriate.
-
-## Architecture
-
-The browser uses IndexedDB and a service worker for offline operation. The cloud API authenticates users, separates organizations, accepts idempotent sync commands, detects version conflicts, projects accepted farm commands into normalized PostgreSQL tables, and retains audit/sync history.
+The historical Phase 0A handoff remains the architecture authority; this deployment adapts its runtime to ChatGPT Sites without changing the ledger and offline-first principles.
