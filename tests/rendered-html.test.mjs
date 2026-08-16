@@ -33,6 +33,43 @@ test("renders development preview metadata", async () => {
   assert.match(await response.text(), developmentPreviewMeta);
 });
 
+test("owner and staff accounts have real two-factor and session security", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const cloud = await readFile(new URL("../public/cloud.js", import.meta.url), "utf8");
+  const api = await readFile(new URL("../app/api/[[...path]]/route.ts", import.meta.url), "utf8");
+  for (const id of ["mfaLoginPanel", "mfaSetupForm", "mfaRecoveryCodes", "securitySessionRows", "securityEventRows", "passwordChangeForm"]) assert.match(html, new RegExp(`id="${id}"`));
+  assert.match(app, /verifyMfa/);
+  assert.match(app, /logoutCloud/);
+  assert.match(cloud, /security\/mfa\/setup/);
+  assert.match(cloud, /security\/sessions\/revoke/);
+  assert.match(api, /user_security/);
+  assert.match(api, /auth_rate_limits/);
+  assert.match(api, /security_events/);
+  assert.match(api, /MFA_ENCRYPTION_KEY/);
+  assert.match(api, /auth\/mfa\/verify/);
+  assert.match(api, /auth\/logout/);
+  assert.match(api, /PASSWORD_NOT_STRONG_ENOUGH/);
+});
+
+test("sensitive actions use granular cloud permissions and owner approvals", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const cloud = await readFile(new URL("../public/cloud.js", import.meta.url), "utf8");
+  const api = await readFile(new URL("../app/api/[[...path]]/route.ts", import.meta.url), "utf8");
+  for (const id of ["securityControlCenter", "staffPermissionRows", "securityApprovalRows", "approvalQueueBadge"]) assert.match(html, new RegExp(`id="${id}"`));
+  assert.match(api, /CREATE TABLE IF NOT EXISTS user_permissions/);
+  assert.match(api, /CREATE TABLE IF NOT EXISTS approval_requests/);
+  assert.match(api, /CUSTOM_PERMISSION_DENIED/);
+  assert.match(api, /MFA_REQUIRED_FOR_SENSITIVE_ACTION/);
+  assert.match(api, /OWNER_APPROVAL_REQUIRED/);
+  assert.match(api, /security\/approvals\/decision/);
+  assert.match(cloud, /x-device-name/);
+  assert.match(cloud, /getSecurityControlCenter/);
+  assert.match(app, /function renderSecurityControls/);
+  assert.match(app, /ApprovalDecision/);
+});
+
 test("dashboard date windows are locally declared before sync rendering", async () => {
   const source = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
   assert.match(source, /const weekAgo=new Date\(today\)/);
@@ -89,7 +126,7 @@ test("animal and flock records have live traceability passports", async () => {
   assert.match(app, /function recordTimeline/);
   assert.match(app, /const code39=/);
   assert.match(app, /data-open-passport/);
-  assert.match(worker, /farm-manager-v65/);
+  assert.match(worker, /farm-manager-v74/);
 });
 
 test("veterinary control links schedules, medicine stock, withdrawals and biosecurity", async () => {
@@ -106,7 +143,28 @@ test("veterinary control links schedules, medicine stock, withdrawals and biosec
   assert.match(app, /HealthProgram:'healthPrograms'/);
   assert.match(api, /HealthProgram: "healthPrograms"/);
   assert.match(api, /DiseaseOutbreak: "outbreaks"/);
-  assert.match(worker, /farm-manager-v65/);
+  assert.match(worker, /farm-manager-v74/);
+});
+
+test("compliance center connects visitors cleaning evidence and inspection packs", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const api = await readFile(new URL("../app/api/[[...path]]/route.ts", import.meta.url), "utf8");
+  for (const id of ["compliance", "visitorForm", "sanitationForm", "complianceDocumentForm", "printCompliancePack"]) assert.match(html, new RegExp(`id="${id}"`));
+  assert.match(app, /function complianceStatus/);
+  assert.match(app, /queueCreation\('VisitorLog'/);
+  assert.match(app, /queueCreation\('SanitationSchedule'/);
+  assert.match(app, /queueCreation\('ComplianceDocument'/);
+  assert.match(api, /VisitorLog: "visitorLogs"/);
+  assert.match(api, /ComplianceDocument: "complianceDocuments"/);
+  assert.match(html, /id="complianceDocumentFile"/);
+  assert.match(html, /id="complianceDocumentApproved"/);
+  assert.match(app, /uploadComplianceFile/);
+  assert.match(app, /downloadComplianceFile/);
+  assert.match(app, /COMPLIANCE_EVIDENCE_APPROVED/);
+  assert.match(api, /DOCUMENT_STORAGE_UNAVAILABLE/);
+  assert.match(api, /FILE_TYPE_NOT_ALLOWED/);
+  assert.match(api, /compliance\/files/);
 });
 
 test("production-to-sale commerce protects stock and tracks customer payments", async () => {
@@ -123,7 +181,7 @@ test("production-to-sale commerce protects stock and tracks customer payments", 
   assert.match(app, /Auto-linked from/);
   assert.match(api, /ProductionLot: "productionLots"/);
   assert.match(api, /SalePayment: "salePayments"/);
-  assert.match(worker, /farm-manager-v65/);
+  assert.match(worker, /farm-manager-v74/);
 });
 
 test("financial control derives cash, receivables, payables and budgets from live ledgers", async () => {
@@ -140,7 +198,7 @@ test("financial control derives cash, receivables, payables and budgets from liv
   assert.match(api, /SupplierPayment: "supplierPayments"/);
   assert.match(api, /CashAdjustment: "cashAdjustments"/);
   assert.match(api, /Budget: "budgets"/);
-  assert.match(worker, /farm-manager-v65/);
+  assert.match(worker, /farm-manager-v74/);
 });
 
 test("performance intelligence filters live records and exports decision-ready reports", async () => {
@@ -153,7 +211,7 @@ test("performance intelligence filters live records and exports decision-ready r
   assert.match(app, /function renderReports/);
   assert.match(app, /farm-performance-/);
   assert.match(app, /Customer balance due/);
-  assert.match(worker, /farm-manager-v65/);
+  assert.match(worker, /farm-manager-v74/);
 });
 
 test("finance produces a funding-ready printable management statement", async () => {
@@ -168,7 +226,7 @@ test("finance produces a funding-ready printable management statement", async ()
   assert.match(app, /Net working position/);
   assert.match(app, /Recommended supporting documents/);
   assert.match(app, /filter\(row=>!row\.payrollRecordId\)/);
-  assert.match(worker, /farm-manager-v65/);
+  assert.match(worker, /farm-manager-v74/);
 });
 
 test("financial statement renders directly without popups or embedded frames", async () => {
@@ -209,7 +267,7 @@ test("farm intelligence turns accepted live records into actionable synced recom
   assert.match(app, /queueCreation\('BIInsightAction',record\)/);
   assert.match(app, /Created from Farm Intelligence/);
   assert.match(api, /BIInsightAction: "insightActions"/);
-  assert.match(worker, /farm-manager-v65/);
+  assert.match(worker, /farm-manager-v74/);
 });
 
 test("farm assistant answers from authorized records and confirms proposals before writes", async () => {
@@ -226,7 +284,7 @@ test("farm assistant answers from authorized records and confirms proposals befo
   assert.match(app, /queueCreation\('AIProposalDecision',record\)/);
   assert.match(app, /AI_PROPOSAL_\$\{decision\}/);
   assert.match(api, /AIProposalDecision: "aiProposalDecisions"/);
-  assert.match(worker, /farm-manager-v65/);
+  assert.match(worker, /farm-manager-v74/);
 });
 
 test("procurement connects smart restocking, approval, inspection, landed cost and assistant guidance", async () => {
@@ -242,7 +300,7 @@ test("procurement connects smart restocking, approval, inspection, landed cost a
   assert.match(app, /supplier.*purchase.*procure.*quotation.*order/);
   assert.match(api, /PurchaseRequisition: "purchaseRequisitions"/);
   assert.match(api, /GoodsReceipt: "goodsReceipts"/);
-  assert.match(worker, /farm-manager-v65/);
+  assert.match(worker, /farm-manager-v74/);
 });
 
 test("production planning forecasts resources and confirms connected approvals", async () => {
@@ -325,22 +383,22 @@ test("stabilization keeps domain changes, farm workspaces, backups and clients i
   const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
   const worker = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
   assert.match(app, /function queueWorkspaceSnapshot/);
-  assert.match(app, /state\.offlineQueue\.push\(command\);queueWorkspaceSnapshot\(record\.createdAt\)/);
+  assert.match(app, /queueCreation\('DailyRecord',record\)/);
   assert.match(app, /queueCreation\('Animal',\{\.\.\.animal\}\)/);
   assert.match(app, /queueCreation\('Task',\{\.\.\.task\}\)/);
   assert.match(app, /mergeCloudSnapshot\(await bootstrap\(\)\)/);
   assert.match(app, /schemaVersion:2/);
   assert.match(app, /\[1,2\]\.includes\(parsed\?\.schemaVersion\)/);
-  assert.match(app, /farm-manager-sw-v65/);
-  assert.match(app, /sw\.js\?v=65/);
-  assert.match(worker, /farm-manager-v65/);
+  assert.match(app, /farm-manager-sw-v74/);
+  assert.match(app, /sw\.js\?v=74/);
+  assert.match(worker, /farm-manager-v74/);
 });
 
 test("farm system preference controls poultry, livestock and mixed navigation", async () => {
   const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
   const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
   const css = await readFile(new URL("../public/admin.css", import.meta.url), "utf8");
-  assert.match(app, /const flockOnlyViews=new Set\(\['flocks','daily'\]\)/);
+  assert.match(app, /const flockOnlyViews=new Set\(\['flocks'\]\)/);
   assert.match(app, /livestockOnlyViews=new Set\(\['animals','breeding'\]\)/);
   assert.match(app, /function enabledFarmSystems/);
   assert.match(app, /function viewAllowedBySystem/);
@@ -351,4 +409,153 @@ test("farm system preference controls poultry, livestock and mixed navigation", 
   assert.match(html, /data-system-only="LIVESTOCK"/);
   assert.match(css, /high-legibility interface/);
   assert.match(css, /body\[data-farm-system="mixed"\]/);
+});
+
+test("workflow performance renders only the active screen and coalesces workspace snapshots", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const store = await readFile(new URL("../public/store.js", import.meta.url), "utf8");
+  const worker = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
+  assert.match(app, /const viewRenderers=/);
+  assert.match(app, /function renderView\(name=activeView\)/);
+  assert.match(app, /renderFrame=requestAnimationFrame\(render\)/);
+  assert.match(app, /function scheduleWorkspaceSnapshot/);
+  assert.match(app, /queueMicrotask\(/);
+  assert.match(store, /let dbPromise/);
+  assert.match(store, /let writeQueue = Promise\.resolve\(\)/);
+  assert.match(worker, /farm-manager-v74/);
+});
+
+test("quick farm entry batches flock and livestock work with safe reversals", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const css = await readFile(new URL("../public/admin.css", import.meta.url), "utf8");
+  for (const id of ["quickTarget", "quickMortality", "quickProduction", "quickFeed", "quickWater", "quickHealth", "quickExpense", "quickSale", "useYesterday", "quickChecklist", "quickBatchRows"]) assert.match(html, new RegExp(`id="${id}"`));
+  assert.match(app, /function renderQuickEntry/);
+  assert.match(app, /entryMode:'QUICK'/);
+  assert.match(app, /data-undo-quick/);
+  assert.match(app, /QUICK_ENTRY_BATCH_REVERSED/);
+  assert.match(app, /FlockPopulationReversal/);
+  assert.match(app, /StockMovementReversal/);
+  assert.match(css, /one-screen quick farm entry/);
+});
+
+test("operations alerts become assigned auditable tasks with completion evidence", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const css = await readFile(new URL("../public/admin.css", import.meta.url), "utf8");
+  const worker = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
+  assert.match(html, /id="briefingHeadline"/);
+  assert.match(html, /data-task-filter="OVERDUE"/);
+  assert.match(html, /id="taskCompleteEvidence"/);
+  assert.match(app, /data-alert-task=/);
+  assert.match(app, /action:'ALERT_TASK_CREATED'/);
+  assert.match(app, /action:'TASK_COMPLETED'/);
+  assert.match(app, /completionNotes:notes/);
+  assert.match(css, /Build 68 — actionable farm operations/);
+  assert.match(worker, /farm-manager-v74/);
+});
+
+test("decision dashboard compares poultry livestock finance and verified targets", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const css = await readFile(new URL("../public/admin.css", import.meta.url), "utf8");
+  const worker = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
+  assert.match(html, /id="analyticsLayRate"/);
+  assert.match(html, /id="analyticsBreeding"/);
+  assert.match(html, /id="weeklySummaryEvidence"/);
+  assert.match(html, /id="targetWarningRows"/);
+  assert.match(app, /layRate=layerBirds\?/);
+  assert.match(app, /feedDays=recentFeed\?/);
+  assert.match(app, /Evidence: \$\{sales\.length\} sales/);
+  assert.match(css, /Build 69 — farm analytics and decision dashboard/);
+  assert.match(worker, /farm-manager-v74/);
+});
+
+test("sales stabilization supports multi-item invoices credit control returns and safe voids", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  assert.match(html, /Create multi-item invoice/);
+  assert.match(html, /Credit limit \(GHS\)/);
+  assert.match(html, /Record return or refund/);
+  assert.match(app, /function saleLines/);
+  assert.match(app, /SalesReturn:'salesReturns'/);
+  assert.match(app, /data-void-sale/);
+  assert.match(html, /Optional · leave blank for no limit/);
+  assert.doesNotMatch(html, /id="customerCreditLimit"[^>]*required/);
+  assert.match(app, /creditLimit:creditValue===''.*?null:Number\(creditValue\)/);
+  assert.match(app, /if\(hasLimit&&newCredit>limit/);
+  assert.doesNotMatch(app, /customer has no credit limit/);
+});
+
+test("stabilization keeps reports tasks and assistant interactive", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  for (const id of ["reports", "tasks", "assistant", "assistantForm", "assistantSubmit", "assistantStatus"]) assert.match(html, new RegExp(`id="${id}"`));
+  assert.match(app, /populationRows=reportRows\(state\.populationEvents,window\)/);
+  assert.match(app, /populationRows\.filter\(row=>row\.flockId===flock\.id/);
+  assert.doesNotMatch(app, /const window=.*?population=reportRows\(state\.populationEvents,window\)/);
+  assert.match(app, /\(state\.offlineQueue\|\|\[\]\)\.filter\(r=>r\.status==='PENDING_SYNC'\)/);
+  assert.match(app, /try\{renderView\(name\);\}catch\(error\)/);
+  assert.match(app, /requestSubmit\(\)/);
+  assert.match(app, /The assistant could not complete that answer/);
+});
+
+test("tasks delivery navigation and farm branding remain operational", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const css = await readFile(new URL("../public/admin.css", import.meta.url), "utf8");
+  const worker = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
+  assert.match(app, /function taskLinkedOptions\(\).*?enabled=enabledFarmSystems\(\)/s);
+  assert.doesNotMatch(app, /function taskLinkedOptions\(\).*?systemEnabled\(/s);
+  assert.match(app, /function updateDeliveryFields\(\).*?orderFulfilment\.value==='DELIVERY'/s);
+  assert.match(app, /\$\('#orderLocation'\)\.required=delivery/);
+  assert.match(app, /viewBackBtn\.addEventListener\('click'/);
+  assert.match(app, /id="setupFarmLogo"/);
+  assert.match(app, /function renderFarmBrand/);
+  assert.match(app, /farmLogoHtml\('mark'\)/);
+  assert.match(app, /class="document-toolbar"/);
+  assert.match(css, /reliable navigation, conditional delivery and farm branding/);
+  assert.match(worker, /farm-manager-v74-stabilization-80/);
+});
+
+test("uploaded farm logos stay complete and mobile page titles remain readable", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const css = await readFile(new URL("../public/admin.css", import.meta.url), "utf8");
+  assert.match(css, /complete logo artwork and readable mobile header/);
+  assert.match(css, /\.farm-brand-mark\.has-logo.*?background-size:contain/s);
+  assert.match(css, /\.topbar-title\{display:grid;grid-template-columns:auto auto minmax\(0,1fr\)/);
+  assert.match(css, /\.topbar-title h1.*?white-space:normal/s);
+  assert.match(app, /\.mark\{object-fit:contain;background:#fff/);
+  assert.match(app, /\.document-logo\{.*?object-fit:contain/s);
+});
+
+test("single-system farms hide incompatible records and controls", async () => {
+  const app=await readFile(new URL('../public/app.js',import.meta.url),'utf8');
+  assert.match(app, /switcher\.hidden=enabled\.size<2/);
+  assert.match(app, /configureOptions\('#healthTargetType'/);
+  assert.match(app, /configureOptions\('#planSystem'/);
+  assert.match(app, /configureOptions\('#housingType'/);
+  assert.match(app, /eggDays=enabled\.has\('FLOCKS'\)/);
+  assert.match(app, /milkDays=enabled\.has\('LIVESTOCK'\)/);
+  assert.match(app, /enabledSystems\.has\('FLOCKS'\)\?\(state\.flocks/);
+  assert.doesNotMatch(app, /class="add-system-card"/);
+});
+
+test("quotation confirmation reserves a compatible live batch with visible failures", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const css = await readFile(new URL("../public/admin.css", import.meta.url), "utf8");
+  assert.match(app, /function reservableLotForOrder/);
+  assert.match(app, /ORDER_RESERVATION_BATCH_CHANGED/);
+  assert.match(app, /order\.reservedAt=new Date\(\)\.toISOString\(\)/);
+  assert.match(app, /Reservation needs .*?compatible/s);
+  assert.match(app, /event\.stopImmediatePropagation\(\)/);
+  assert.match(css, /\.order-action-status\.error/);
+});
+
+test("farm logo persists through restart bootstrap and active-farm reconciliation", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const route = await readFile(new URL("../app/api/[[...path]]/route.ts", import.meta.url), "utf8");
+  assert.match(app, /transaction\.entityType==='FarmProfile'.*?upsertCloudRecord\('farms'/s);
+  assert.match(app, /state\.farms=cloud\.farms\.map\(farm=>farm\.id===cloud\.farm\?\.id\?\{\.\.\.farm,\.\.\.cloud\.farm\}:farm\)/);
+  assert.match(app, /key!=='farms'/);
+  assert.match(route, /command\.entityType === "FarmProfile".*?state\.farms = \[\.\.\.farms\.filter/s);
 });

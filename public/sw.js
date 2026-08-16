@@ -1,4 +1,4 @@
-const CACHE='farm-manager-v65';
+const CACHE='farm-manager-v74-stabilization-80';
 const ASSETS=['./','./index.html','./app.js','./qr-tools.js','./cloud.js','./domain.js','./store.js','./styles.css','./admin.css','./portfolio.css','./manifest.webmanifest'];
 
 self.addEventListener('install',event=>{
